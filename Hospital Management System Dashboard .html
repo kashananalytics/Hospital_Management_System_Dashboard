@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hospital Management System — Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f0f4f8;
+    --surface: #ffffff;
+    --surface-2: #f7f9fc;
+    --border: #dce4ed;
+    --text-primary: #1a2635;
+    --text-secondary: #5a6a7e;
+    --text-muted: #8fa0b4;
+    --teal: #2a7f7f;
+    --teal-light: #3da5a5;
+    --teal-pale: #e6f4f4;
+    --slate: #3e5771;
+    --slate-light: #5a7a9a;
+    --slate-pale: #eaf0f7;
+    --sage: #5a8a6a;
+    --sage-light: #7aaa8a;
+    --sage-pale: #eaf3ec;
+    --amber: #c47a30;
+    --amber-pale: #fdf2e6;
+    --rose: #a05060;
+    --rose-pale: #f9eef0;
+    --shadow-sm: 0 1px 3px rgba(26,38,53,0.06), 0 1px 2px rgba(26,38,53,0.04);
+    --shadow: 0 4px 16px rgba(26,38,53,0.08), 0 1px 4px rgba(26,38,53,0.05);
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text-primary); min-height: 100vh; }
+
+  .sidebar {
+    position: fixed; left: 0; top: 0; bottom: 0; width: 230px;
+    background: var(--text-primary); display: flex; flex-direction: column; z-index: 100; overflow: hidden;
+  }
+  .sidebar-logo { padding: 28px 24px 20px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .logo-mark { display: flex; align-items: center; gap: 10px; }
+  .logo-icon { width: 36px; height: 36px; background: var(--teal); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .logo-text { font-family: 'DM Serif Display', serif; color: #fff; font-size: 17px; line-height: 1.2; }
+  .logo-sub { font-family: 'DM Sans', sans-serif; color: rgba(255,255,255,0.4); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 2px; }
+  .sidebar-nav { flex: 1; padding: 16px 12px; overflow-y: auto; }
+  .nav-section-label { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.3); padding: 12px 12px 6px; font-weight: 600; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-sm); cursor: pointer; transition: all 0.15s; color: rgba(255,255,255,0.55); font-size: 13.5px; font-weight: 500; margin-bottom: 2px; border: none; background: none; width: 100%; text-align: left; }
+  .nav-item:hover { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.9); }
+  .nav-item.active { background: var(--teal); color: #fff; }
+  .nav-icon { font-size: 15px; width: 18px; text-align: center; }
+  .sidebar-footer { padding: 16px 24px; border-top: 1px solid rgba(255,255,255,0.08); }
+  .status-dot { display: inline-block; width: 7px; height: 7px; background: var(--sage-light); border-radius: 50%; margin-right: 6px; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+  .status-text { font-size: 11.5px; color: rgba(255,255,255,0.4); }
+
+  .main { margin-left: 230px; min-height: 100vh; display: flex; flex-direction: column; }
+  .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 32px; height: 64px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; }
+  .page-title { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--text-primary); }
+  .date-badge { font-size: 12px; color: var(--text-muted); background: var(--surface-2); padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border); }
+  .content { padding: 28px 32px; flex: 1; }
+  .section { display: none; }
+  .section.active { display: block; }
+
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .kpi-card { background: var(--surface); border-radius: var(--radius); padding: 20px 22px; border: 1px solid var(--border); box-shadow: var(--shadow-sm); position: relative; overflow: hidden; transition: box-shadow 0.2s, transform 0.2s; }
+  .kpi-card:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
+  .kpi-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+  .kpi-card.teal::before { background: var(--teal); }
+  .kpi-card.slate::before { background: var(--slate); }
+  .kpi-card.sage::before { background: var(--sage); }
+  .kpi-card.amber::before { background: var(--amber); }
+  .kpi-card.rose::before { background: var(--rose); }
+  .kpi-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; margin-bottom: 14px; }
+  .kpi-icon.teal { background: var(--teal-pale); }
+  .kpi-icon.slate { background: var(--slate-pale); }
+  .kpi-icon.sage { background: var(--sage-pale); }
+  .kpi-icon.amber { background: var(--amber-pale); }
+  .kpi-icon.rose { background: var(--rose-pale); }
+  .kpi-value { font-size: 28px; font-weight: 700; color: var(--text-primary); line-height: 1; margin-bottom: 4px; letter-spacing: -0.02em; }
+  .kpi-label { font-size: 12px; color: var(--text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+  .kpi-sub { font-size: 11.5px; color: var(--text-secondary); margin-top: 8px; }
+
+  .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+  .charts-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+  .chart-card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow-sm); padding: 22px; transition: box-shadow 0.2s; }
+  .chart-card:hover { box-shadow: var(--shadow); }
+  .chart-card.full { grid-column: 1 / -1; }
+  .chart-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; }
+  .chart-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+  .chart-subtitle { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
+  .chart-tag { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 20px; background: var(--teal-pale); color: var(--teal); }
+
+  .donut-legend { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-secondary); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .legend-val { margin-left: auto; font-weight: 600; color: var(--text-primary); }
+
+  .revenue-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+  .rev-card { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 16px; }
+  .rev-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+  .rev-val { font-size: 20px; font-weight: 700; color: var(--text-primary); margin-top: 4px; letter-spacing: -0.02em; }
+  .rev-sub { font-size: 11px; color: var(--text-secondary); margin-top: 3px; }
+
+  .wide-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; margin-bottom: 24px; }
+  .alert-banner { background: linear-gradient(135deg, var(--teal-pale), #e8f5f5); border: 1px solid rgba(42,127,127,0.2); border-radius: var(--radius); padding: 14px 20px; display: flex; align-items: center; gap: 12px; margin-bottom: 22px; font-size: 13px; color: var(--teal); font-weight: 500; }
+  .section-heading { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--text-primary); margin-bottom: 6px; }
+  .section-desc { font-size: 13px; color: var(--text-muted); margin-bottom: 22px; }
+
+  .progress-list { display: flex; flex-direction: column; gap: 12px; }
+  .progress-info { display: flex; justify-content: space-between; margin-bottom: 5px; }
+  .progress-name { font-size: 13px; color: var(--text-secondary); }
+  .progress-pct { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+  .progress-track { height: 7px; background: var(--border); border-radius: 4px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 4px; transition: width 0.8s cubic-bezier(.4,0,.2,1); }
+
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">
+      <div class="logo-icon">🏥</div>
+      <div>
+        <div class="logo-text">HMS</div>
+        <div class="logo-sub">Analytics Portal</div>
+      </div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Overview</div>
+    <button class="nav-item active" onclick="showSection('overview', this)"><span class="nav-icon">📊</span> Dashboard</button>
+    <button class="nav-item" onclick="showSection('patients', this)"><span class="nav-icon">👥</span> Patients</button>
+    <div class="nav-section-label" style="margin-top:8px">Clinical</div>
+    <button class="nav-item" onclick="showSection('appointments', this)"><span class="nav-icon">📅</span> Appointments</button>
+    <button class="nav-item" onclick="showSection('medical', this)"><span class="nav-icon">🩺</span> Medical Records</button>
+    <button class="nav-item" onclick="showSection('surgery', this)"><span class="nav-icon">⚕️</span> Surgery</button>
+    <div class="nav-section-label" style="margin-top:8px">Operations</div>
+    <button class="nav-item" onclick="showSection('staff', this)"><span class="nav-icon">👨‍⚕️</span> Staff</button>
+    <button class="nav-item" onclick="showSection('beds', this)"><span class="nav-icon">🛏️</span> Beds & Rooms</button>
+    <button class="nav-item" onclick="showSection('revenue', this)"><span class="nav-icon">💰</span> Revenue</button>
+  </nav>
+  <div class="sidebar-footer">
+    <span class="status-dot"></span>
+    <span class="status-text">Live Data · May 2025</span>
+  </div>
+</aside>
+
+<div class="main">
+  <header class="topbar">
+    <div class="page-title" id="page-title">Hospital Overview</div>
+    <div class="date-badge">📅 Updated: May 31, 2025</div>
+  </header>
+
+  <div class="content">
+
+    <!-- OVERVIEW -->
+    <div class="section active" id="section-overview">
+      <div class="section-heading">Hospital Overview</div>
+      <div class="section-desc">Real-time summary of hospital operations, capacity, and key performance indicators</div>
+      <div class="alert-banner">🏥 &nbsp;All systems operational — 1,000 appointments tracked, 1,500 active patients, and 2,000 bed/room admissions recorded.</div>
+      <div class="kpi-grid">
+        <div class="kpi-card teal"><div class="kpi-icon teal">👥</div><div class="kpi-value">1,500</div><div class="kpi-label">Total Patients</div><div class="kpi-sub">790 Female · 710 Male</div></div>
+        <div class="kpi-card slate"><div class="kpi-icon slate">👨‍⚕️</div><div class="kpi-value">400</div><div class="kpi-label">Total Doctors</div><div class="kpi-sub">261 Male · 139 Female</div></div>
+        <div class="kpi-card sage"><div class="kpi-icon sage">💊</div><div class="kpi-value">1,000</div><div class="kpi-label">Appointments</div><div class="kpi-sub">769 Completed · 102 No-Show</div></div>
+        <div class="kpi-card amber"><div class="kpi-icon amber">🛏️</div><div class="kpi-value">500</div><div class="kpi-label">Total Beds</div><div class="kpi-sub">Across 63 Wards</div></div>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi-card rose"><div class="kpi-icon rose">🏢</div><div class="kpi-value">31</div><div class="kpi-label">Departments</div><div class="kpi-sub">391 Rooms Available</div></div>
+        <div class="kpi-card teal"><div class="kpi-icon teal">💉</div><div class="kpi-value">1,000</div><div class="kpi-label">Surgeries</div><div class="kpi-sub">39 Emergency · 31 Transplant</div></div>
+        <div class="kpi-card slate"><div class="kpi-icon slate">🩺</div><div class="kpi-value">3,000</div><div class="kpi-label">Medical Records</div><div class="kpi-sub">Across all departments</div></div>
+        <div class="kpi-card sage"><div class="kpi-icon sage">💰</div><div class="kpi-value">₨109.8M</div><div class="kpi-label">Total Revenue</div><div class="kpi-sub">Beds + Rooms + Appointments</div></div>
+      </div>
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-header"><div><div class="chart-title">Monthly Appointment Trend</div><div class="chart-subtitle">Jul 2024 – Jun 2025</div></div><span class="chart-tag">12-month</span></div>
+          <canvas id="monthlyChart" height="200"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header"><div><div class="chart-title">Appointment Status</div><div class="chart-subtitle">Distribution of 1,000 appointments</div></div></div>
+          <div style="display:flex;gap:24px;align-items:center;">
+            <div style="width:160px;height:160px;flex-shrink:0;"><canvas id="statusDonut"></canvas></div>
+            <div class="donut-legend">
+              <div class="legend-item"><div class="legend-dot" style="background:#5a8a6a"></div>Completed<div class="legend-val">769</div></div>
+              <div class="legend-item"><div class="legend-dot" style="background:#8fa0b4"></div>No-Show<div class="legend-val">102</div></div>
+              <div class="legend-item"><div class="legend-dot" style="background:#c47a30"></div>Scheduled<div class="legend-val">86</div></div>
+              <div class="legend-item"><div class="legend-dot" style="background:#a05060"></div>Cancelled<div class="legend-val">43</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="charts-grid-3">
+        <div class="chart-card">
+          <div class="chart-header"><div><div class="chart-title">Payment Methods</div><div class="chart-subtitle">Appointments</div></div></div>
+          <canvas id="paymentChart" height="180"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header"><div><div class="chart-title">Booking Mode</div><div class="chart-subtitle">How patients book</div></div></div>
+          <canvas id="modeChart" height="180"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header"><div><div class="chart-title">Top Visit Reasons</div><div class="chart-subtitle">Most common</div></div></div>
+          <div class="progress-list" style="margin-top:4px;">
+            <div class="progress-item"><div class="progress-info"><span class="progress-name">General Checkup</span><span class="progress-pct">130</span></div><div class="progress-track"><div class="progress-fill" style="width:100%;background:var(--teal)"></div></div></div>
+            <div class="progress-item"><div class="progress-info"><span class="progress-name">Hypertension</span><span class="progress-pct">117</span></div><div class="progress-track"><div class="progress-fill" style="width:90%;background:var(--slate)"></div></div></div>
+            <div class="progress-item"><div class="progress-info"><span class="progress-name">Migraine</span><span class="progress-pct">114</span></div><div class="progress-track"><div class="progress-fill" style="width:88%;background:var(--sage)"></div></div></div>
+            <div class="progress-item"><div class="progress-info"><span class="progress-name">Headache</span><span class="progress-pct">111</span></div><div class="progress-track"><div class="progress-fill" style="width:85%;background:var(--amber)"></div></div></div>
+            <div class="progress-item"><div class="progress-info"><span class="progress-name">Asthma</span><span class="progress-pct">110</span></div><div class="progress-track"><div class="progress-fill" style="width:85%;background:var(--rose)"></div></div></div>
+            <div class="progress-item"><div class="progress-info"><span class="progress-name">Back Pain</span><span class="progress-pct">109</span></div><div class="progress-track"><div class="progress-fill" style="width:84%;background:var(--teal-light)"></div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PATIENTS -->
+    <div class="section" id="section-patients">
+      <div class="section-heading">Patient Analytics</div>
+      <div class="section-desc">Demographics, age distribution, and gender breakdown across 1,500 patients</div>
+      <div class="kpi-grid">
+        <div class="kpi-card teal"><div class="kpi-icon teal">👩</div><div class="kpi-value">790</div><div class="kpi-label">Female Patients</div><div class="kpi-sub">52.7% of total</div></div>
+        <div class="kpi-card slate"><div class="kpi-icon slate">👨</div><div class="kpi-value">710</div><div class="kpi-label">Male Patients</div><div class="kpi-sub">47.3% of total</div></div>
+        <div class="kpi-card sage"><div class="kpi-icon sage">👴</div><div class="kpi-value">579</div><div class="kpi-label">Senior Patients (60+)</div><div class="kpi-sub">Largest age group</div></div>
+        <div class="kpi-card amber"><div class="kpi-icon amber">🧒</div><div class="kpi-value">196</div><div class="kpi-label">Child Patients (0–12)</div><div class="kpi-sub">Pediatric cases</div></div>
+      </div>
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-header"><div><div class="chart-title">Age Group Distribution</div><div class="chart-subtitle">Patient age segments</div></div></div>
+          <canvas id="ageGroupChart" height="220"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header"><div><div class="chart-title">Gender Distribution</div><div class="chart-subtitle">Male vs Female patients</div></div></div>
+          <div style="display:flex;gap:24px;align-items:center;margin-top:16px;">
+            <div style="width:180px;height:180px;flex-shrink:0;"><canvas id="genderDonut"></canvas></div>
+            <div class="donut-legend">
+              <div class="legend-item"><div class="legend-dot" style="background:var(--teal)"></div>Female (F)<div class="legend-val">790</div></div>
+              <div class="legend-item"><div class="legend-dot" style="background:var(--slate)"></div>Male (M)<div class="legend-val">710</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="chart-card full">
+        <div class="chart-header"><div><div class="chart-title">Age Group by Gender</div><div class="chart-subtitle">Grouped comparison across life stages</div></div></div>
+        <canvas id="ageGenderChart" height="160"></canvas>
+      </div>
+    </div>
+
+    <!-- APPOINTMENTS -->
+    <div class="section" id="section-appointments">
+      <div class="section-heading">Appointments</div>
+      <div class="section-desc">Booking patterns, status tracking, and scheduling insights</div>
+      <div class="kpi-grid">
+        <div class="kpi-card teal"><div class="kpi-icon teal">✅</div><div class="kpi-value">76.9%</div><div class="kpi-label">Completion Rate</div><div class="kpi-sub">769 of 1,000 appointments</div></div>
+        <div class="kpi-card rose"><div class="kpi-icon rose">❌</div><div class="kpi-value">4.3%</div><div class="kpi-label">Cancellation Rate</div><div class="kpi-sub">43 cancelled</div></div>
+        <div class="kpi-card amber"><div class="kpi-icon amber">🚫</div><div class="kpi-value">10.2%</div><div class="kpi-label">No-Show Rate</div><div class="kpi-sub">102 no-shows</div></div>
+        <div class="kpi-card sage"><div class="kpi-icon sage">💵</div><div class="kpi-value">₨1,663</div><div class="kpi-label">Avg. Payment</div><div class="kpi-sub">Total: ₨1.66M</div></div>
+      </div>
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-header"><div><div class="chart-title">Appointments by Month</div><div class="chart-subtitle">12-month trend</div></div></div>
+          <canvas id="apptMonthlyBar" height="200"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header"><div><div class="chart-title">Payment Method Breakdown</div><div class="chart-subtitle">Across all appointments</div></div></div>
+          <canvas id="apptPaymentPie" height="200"></canvas>
+        </div>
+      </div>
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-header"><div><div class="chart-title">Booking Channels</div><div class="chart-subtitle">Online, In Person, Call</div></div></div>
+          <canvas id="bookingChannel" height="220"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header"><div><div class="chart-title">Top Appointment Reasons</div><div class="chart-subtitle">Chief complaints (horizontal)</div></div></div>
+          <canvas id="reasonsChart" height="220"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- MEDICAL RECORDS -->
+    <div class="section" id="section-medical">
+      <div class="section-heading">Medical Records</div>
+      <div class="section-desc">Diagnoses and treatment patterns from 3,000 clinical records</div>
+      <div class="kpi-grid">
+        <div class="kpi-card teal"><div class="kpi-icon teal">📋</div><div class="kpi-value">3,000</div><div class="kpi-label">Total Records</div><div class="kpi-sub">Across all doctors</div></div>
+        <div class="kpi-card sage"><div class="kpi-icon sage">🔬</div><div class="kpi-value">1,799</div><div class="kpi-label">General Checkups</div><div class="kpi-sub">60% of all diagnoses</div></div>
+        <div class="kpi-card amber"><div class="kpi-icon amber">🫀</div><div class="kpi-value">137</div><div class="kpi-label">Hypertension Cases</div><div class="kpi-sub">Essential hypertension</div></div>
+        <div class="kpi-card rose"><div class="kpi-icon rose">🧠</div><div class="kpi-value">137</div><div class="kpi-label">Migraine Cases</div><div class="kpi-sub">Migraine headache</div></div>
+      </div>
+      <div class="wide-grid">
+        <div class="chart-card">
+          <div class="chart-header"><div><div class="chart-title">Top Diagnoses</div><div class="chart-subtitle">Most frequent conditions</div></div></div>
+          <canvas id="diagnosisChart" height="220"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header"><div><div class="chart-title">Diagnosis Share</div><div class="chart-subtitle">Excluding General Checkup</div></div></div>
+          <canvas id="diagDonut" height="240"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- SURGERY -->
+    <div class="section" id="section-surgery">
+      <div class="section-heading">Surgery Records</div>
+      <div class="section-desc">Surgical volumes, types, and post-operative outcomes across 1,000 procedures</div>
+      <div class="kpi-grid">
+        <div class="kpi-card teal"><div class="kpi-icon teal">⚕️</div><div class="kpi-value">1,000</div><div class="kpi-label">Total Surgeries</div><div class="kpi-sub">All types combined</div></div>
+        <div class="kpi-card rose"><div class="kpi-icon rose">🚨</div><div class="kpi-value">39</div><div class="kpi-label">Emergency Surgeries</div><div class="kpi-sub">Highest volume type</div></div>
+        <div class="kpi-card amber"><div class="kpi-icon amber">🔄</div><div class="kpi-value">213</div><div class="kpi-label">Transferred to ICU</div><div class="kpi-sub">Post-operative</div></div>
+        <div class="kpi-card sage"><div class="kpi-icon sage">✅</div><div class="kpi-value">188</div><div class="kpi-label">Recovered</div><div class="kpi-sub">Fully recovered</div></div>
+      </div>
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-header"><div><div class="chart-title">Surgery Types — Top 10</div><div class="chart-subtitle">Volume by procedure type</div></div></div>
+          <canvas id="surgeryTypeChart" height="240"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header"><div><div class="chart-title">Post-Op Outcomes</div><div class="chart-subtitle">Surgery notes classification</div></div></div>
+          <div style="display:flex;gap:24px;align-items:center;margin-top:16px;">
+            <div style="width:170px;height:170px;flex-shrink:0;"><canvas id="surgeryOutcomeDonut"></canvas></div>
+            <div class="donut-legend">
+              <div class="legend-item"><div class="legend-dot" style="background:var(--rose)"></div>Need Special Care<div class="legend-val">223</div></div>
+              <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div>Transfer to ICU<div class="legend-val">213</div></div>
+              <div class="legend-item"><div class="legend-dot" style="background:var(--slate)"></div>Visit Next Month<div class="legend-val">202</div></div>
+              <div class="legend-item"><div class="legend-dot" style="background:var(--sage)"></div>Recovered<div class="legend-val">188</div></div>
+              <div class="legend-item"><div class="legend-dot" style="background:var(--teal)"></div>Stable<div class="legend-val">174</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STAFF -->
+    <div class="section" id="section-staff">
+      <div class="section-heading">Staff Overview</div>
+      <div class="section-desc">Workforce composition, gender ratios, and department coverage</div>
+      <div class="kpi-grid">
+        <div class="kpi-card teal"><div class="kpi-icon teal">👨‍⚕️</div><div class="kpi-value">400</div><div class="kpi-label">Doctors</div><div class="kpi-sub">261 Male · 139 Female</div></div>
+        <div class="kpi-card slate"><div class="kpi-icon slate">👩‍⚕️</div><div class="kpi-value">500</div><div class="kpi-label">Nurses</div><div class="kpi-sub">Across all departments</div></div>
+        <div class="kpi-card sage"><div class="kpi-icon sage">🧹</div><div class="kpi-value">1,100</div><div class="kpi-label">Helpers</div><div class="kpi-sub">Support staff</div></div>
+        <div class="kpi-card amber"><div class="kpi-icon amber">🏢</div><div class="kpi-value">2,000</div><div class="kpi-label">Total Staff</div><div class="kpi-sub">All roles combined</div></div>
+      </div>
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-header"><div><div class="chart-title">Staff Composition</div><div class="chart-subtitle">Role distribution</div></div></div>
+          <canvas id="staffCompositionChart" height="220"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header"><div><div class="chart-title">Doctor Gender Ratio</div><div class="chart-subtitle">Male vs Female physicians</div></div></div>
+          <div style="display:flex;gap:24px;align-items:center;margin-top:20px;">
+            <div style="width:170px;height:170px;flex-shrink:0;"><canvas id="doctorGenderDonut"></canvas></div>
+            <div class="donut-legend">
+              <div class="legend-item"><div class="legend-dot" style="background:var(--slate)"></div>Male Doctors<div class="legend-val">261</div></div>
+              <div class="legend-item"><div class="legend-dot" style="background:var(--teal)"></div>Female Doctors<div class="legend-val">139</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header"><div><div class="chart-title">Workforce Ratios</div><div class="chart-subtitle">Staff balance across roles</div></div><span class="chart-tag">2,000 Total</span></div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:4px;">
+          <div class="rev-card"><div class="rev-label">Total Shifts</div><div class="rev-val">2,058</div><div class="rev-sub">All doctors scheduled</div></div>
+          <div class="rev-card"><div class="rev-label">Departments</div><div class="rev-val">31</div><div class="rev-sub">All departments staffed</div></div>
+          <div class="rev-card"><div class="rev-label">Nurse : Doctor</div><div class="rev-val">1.25×</div><div class="rev-sub">Nurses per doctor</div></div>
+          <div class="rev-card"><div class="rev-label">Helper : Doctor</div><div class="rev-val">2.75×</div><div class="rev-sub">Helpers per doctor</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BEDS & ROOMS -->
+    <div class="section" id="section-beds">
+      <div class="section-heading">Beds & Rooms</div>
+      <div class="section-desc">Inpatient capacity, occupancy, and stay analysis</div>
+      <div class="kpi-grid">
+        <div class="kpi-card teal"><div class="kpi-icon teal">🛏️</div><div class="kpi-value">500</div><div class="kpi-label">Total Beds</div><div class="kpi-sub">Across 63 wards</div></div>
+        <div class="kpi-card slate"><div class="kpi-icon slate">🚪</div><div class="kpi-value">391</div><div class="kpi-label">Total Rooms</div><div class="kpi-sub">6 room types</div></div>
+        <div class="kpi-card sage"><div class="kpi-icon sage">📆</div><div class="kpi-value">3.47</div><div class="kpi-label">Avg. Stay (Days)</div><div class="kpi-sub">Max: 9 days</div></div>
+        <div class="kpi-card amber"><div class="kpi-icon amber">💵</div><div class="kpi-value">₨36,061</div><div class="kpi-label">Avg Bed Billing</div><div class="kpi-sub">Per admission</div></div>
+      </div>
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-header"><div><div class="chart-title">Room Type Distribution</div><div class="chart-subtitle">391 rooms by category</div></div></div>
+          <canvas id="roomTypeChart" height="220"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header"><div><div class="chart-title">Bed Payment Methods</div><div class="chart-subtitle">How patients pay for bed stays</div></div></div>
+          <canvas id="bedPaymentChart" height="220"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header"><div><div class="chart-title">Ward Types</div><div class="chart-subtitle">63 total wards across departments</div></div></div>
+        <div class="progress-list">
+          <div class="progress-item"><div class="progress-info"><span class="progress-name">General Medicine Ward</span><span class="progress-pct">43</span></div><div class="progress-track"><div class="progress-fill" style="width:100%;background:var(--teal)"></div></div></div>
+          <div class="progress-item"><div class="progress-info"><span class="progress-name">ICU</span><span class="progress-pct">8</span></div><div class="progress-track"><div class="progress-fill" style="width:19%;background:var(--rose)"></div></div></div>
+          <div class="progress-item"><div class="progress-info"><span class="progress-name">Cardiology Ward</span><span class="progress-pct">3</span></div><div class="progress-track"><div class="progress-fill" style="width:7%;background:var(--slate)"></div></div></div>
+          <div class="progress-item"><div class="progress-info"><span class="progress-name">Neurology Ward</span><span class="progress-pct">3</span></div><div class="progress-track"><div class="progress-fill" style="width:7%;background:var(--amber)"></div></div></div>
+          <div class="progress-item"><div class="progress-info"><span class="progress-name">Isolation Ward</span><span class="progress-pct">2</span></div><div class="progress-track"><div class="progress-fill" style="width:5%;background:var(--sage)"></div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REVENUE -->
+    <div class="section" id="section-revenue">
+      <div class="section-heading">Revenue Analytics</div>
+      <div class="section-desc">Total hospital revenue breakdown across all income streams</div>
+      <div class="revenue-summary">
+        <div class="rev-card" style="border-left:3px solid var(--teal);"><div class="rev-label">Room Revenue</div><div class="rev-val">₨72.1M</div><div class="rev-sub">1,000 room admissions · Avg ₨72,064</div></div>
+        <div class="rev-card" style="border-left:3px solid var(--slate);"><div class="rev-label">Bed Revenue</div><div class="rev-val">₨36.1M</div><div class="rev-sub">1,000 bed admissions · Avg ₨36,061</div></div>
+        <div class="rev-card" style="border-left:3px solid var(--sage);"><div class="rev-label">Appointment Revenue</div><div class="rev-val">₨1.66M</div><div class="rev-sub">1,000 appointments · Avg ₨1,663</div></div>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi-card teal"><div class="kpi-icon teal">💰</div><div class="kpi-value">₨109.8M</div><div class="kpi-label">Total Revenue</div><div class="kpi-sub">All streams combined</div></div>
+        <div class="kpi-card slate"><div class="kpi-icon slate">📈</div><div class="kpi-value">65.6%</div><div class="kpi-label">Room Revenue Share</div><div class="kpi-sub">Largest income source</div></div>
+        <div class="kpi-card sage"><div class="kpi-icon sage">🛏️</div><div class="kpi-value">32.8%</div><div class="kpi-label">Bed Revenue Share</div><div class="kpi-sub">Second largest</div></div>
+        <div class="kpi-card amber"><div class="kpi-icon amber">📅</div><div class="kpi-value">1.5%</div><div class="kpi-label">Appt Revenue Share</div><div class="kpi-sub">Out-patient billing</div></div>
+      </div>
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-header"><div><div class="chart-title">Revenue Stream Breakdown</div><div class="chart-subtitle">Proportional contribution</div></div></div>
+          <canvas id="revenueDonut" height="220"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header"><div><div class="chart-title">Room vs Bed — Payment Methods</div><div class="chart-subtitle">Billing mode comparison</div></div></div>
+          <canvas id="paymentCompare" height="220"></canvas>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const titles = { overview:'Hospital Overview', patients:'Patient Analytics', appointments:'Appointments', medical:'Medical Records', surgery:'Surgery Records', staff:'Staff Overview', beds:'Beds & Rooms', revenue:'Revenue Analytics' };
+function showSection(id, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('section-' + id).classList.add('active');
+  btn.classList.add('active');
+  document.getElementById('page-title').textContent = titles[id];
+}
+
+const C = { teal:'#2a7f7f', tealL:'#3da5a5', slate:'#3e5771', slateL:'#5a7a9a', sage:'#5a8a6a', sageL:'#7aaa8a', amber:'#c47a30', rose:'#a05060', muted:'#8fa0b4', text:'#1a2635', border:'#dce4ed' };
+Chart.defaults.font.family = "'DM Sans', sans-serif";
+Chart.defaults.color = C.muted;
+
+const tip = { backgroundColor:'#1a2635', titleColor:'#fff', bodyColor:'rgba(255,255,255,0.75)', padding:10, cornerRadius:8, displayColors:false };
+const sc = { x:{ grid:{color:C.border}, ticks:{color:C.muted} }, y:{ grid:{color:C.border}, ticks:{color:C.muted}, beginAtZero:true } };
+
+// Overview
+new Chart('monthlyChart', { type:'line', data:{ labels:['Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun'], datasets:[{ data:[66,87,75,78,80,100,76,87,90,78,97,86], borderColor:C.teal, backgroundColor:'rgba(42,127,127,0.1)', borderWidth:2.5, pointBackgroundColor:C.teal, pointRadius:4, pointHoverRadius:6, fill:true, tension:0.4 }] }, options:{ plugins:{legend:{display:false},tooltip:tip}, scales:sc } });
+new Chart('statusDonut', { type:'doughnut', data:{ datasets:[{ data:[769,102,86,43], backgroundColor:[C.sage,C.slateL,C.amber,C.rose], borderWidth:0, hoverOffset:6 }] }, options:{ cutout:'68%', plugins:{legend:{display:false},tooltip:tip} } });
+new Chart('paymentChart', { type:'bar', data:{ labels:['Digital Wallet','Cash','Card','Insurance'], datasets:[{ data:[262,247,246,245], backgroundColor:[C.teal,C.slate,C.sage,C.amber], borderRadius:6, borderSkipped:false }] }, options:{ plugins:{legend:{display:false},tooltip:tip}, scales:sc } });
+new Chart('modeChart', { type:'bar', data:{ labels:['Online','In Person','Call'], datasets:[{ data:[345,342,313], backgroundColor:[C.teal,C.slate,C.sage], borderRadius:6, borderSkipped:false }] }, options:{ plugins:{legend:{display:false},tooltip:tip}, scales:sc } });
+
+// Patients
+new Chart('ageGroupChart', { type:'bar', data:{ labels:['Senior\n(60+)','Middle\n(36–60)','Adult\n(18–35)','Child\n(0–12)','Teen\n(13–17)'], datasets:[{ data:[579,381,274,196,69], backgroundColor:[C.teal,C.slate,C.sage,C.amber,C.rose], borderRadius:7, borderSkipped:false }] }, options:{ plugins:{legend:{display:false},tooltip:tip}, scales:sc } });
+new Chart('genderDonut', { type:'doughnut', data:{ datasets:[{ data:[790,710], backgroundColor:[C.teal,C.slate], borderWidth:0, hoverOffset:6 }] }, options:{ cutout:'70%', plugins:{legend:{display:false},tooltip:tip} } });
+new Chart('ageGenderChart', { type:'bar', data:{ labels:['Child (0–12)','Teen (13–17)','Adult (18–35)','Middle (36–60)','Senior (60+)'], datasets:[ { label:'Female', data:[99,38,148,196,309], backgroundColor:C.teal, borderRadius:4, borderSkipped:false }, { label:'Male', data:[97,31,126,185,270], backgroundColor:C.slate, borderRadius:4, borderSkipped:false } ] }, options:{ plugins:{ legend:{display:true,position:'top',labels:{color:C.text,font:{size:12},usePointStyle:true,boxWidth:8}}, tooltip:tip }, scales:sc } });
+
+// Appointments
+new Chart('apptMonthlyBar', { type:'bar', data:{ labels:['Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun'], datasets:[{ data:[66,87,75,78,80,100,76,87,90,78,97,86], backgroundColor: [66,87,75,78,80,100,76,87,90,78,97,86].map(v=>v>90?C.teal:C.slateL), borderRadius:6, borderSkipped:false }] }, options:{ plugins:{legend:{display:false},tooltip:tip}, scales:sc } });
+new Chart('apptPaymentPie', { type:'doughnut', data:{ labels:['Digital Wallet','Cash','Card','Insurance'], datasets:[{ data:[262,247,246,245], backgroundColor:[C.teal,C.slate,C.sage,C.amber], borderWidth:0, hoverOffset:6 }] }, options:{ cutout:'65%', plugins:{ legend:{display:true,position:'bottom',labels:{color:C.text,font:{size:12},usePointStyle:true}}, tooltip:tip } } });
+new Chart('bookingChannel', { type:'bar', data:{ labels:['Online','In Person','Call'], datasets:[{ data:[345,342,313], backgroundColor:[C.teal,C.sage,C.slate], borderRadius:8, borderSkipped:false }] }, options:{ plugins:{legend:{display:false},tooltip:tip}, scales:sc } });
+new Chart('reasonsChart', { type:'bar', data:{ labels:['Checkup','Hypertension','Migraine','Headache','Asthma','Back Pain','Diabetes','Chest Pain','Fever'], datasets:[{ data:[130,117,114,111,110,109,107,107,95], backgroundColor:C.teal+'cc', borderRadius:5, borderSkipped:false }] }, options:{ indexAxis:'y', plugins:{legend:{display:false},tooltip:tip}, scales:{ y:{grid:{color:C.border},ticks:{color:C.muted}}, x:{grid:{color:C.border},ticks:{color:C.muted},beginAtZero:true} } } });
+
+// Medical
+new Chart('diagnosisChart', { type:'bar', data:{ labels:['Gen. Checkup','Migraine','Hypertension','Angina','Asthma','Lumbar Strain','Diabetes','Viral Fever'], datasets:[{ data:[1799,137,137,129,122,109,109,101], backgroundColor:[C.teal,C.slate,C.sage,C.amber,C.rose,C.tealL,C.slateL,C.sageL], borderRadius:6, borderSkipped:false }] }, options:{ plugins:{legend:{display:false},tooltip:tip}, scales:sc } });
+new Chart('diagDonut', { type:'doughnut', data:{ labels:['Migraine','Hypertension','Angina','Asthma','Lumbar Strain','Diabetes','Viral Fever','Others'], datasets:[{ data:[137,137,129,122,109,109,101,56], backgroundColor:[C.slate,C.teal,C.amber,C.rose,C.sage,C.slateL,C.sageL,C.muted], borderWidth:0, hoverOffset:6 }] }, options:{ cutout:'60%', plugins:{ legend:{display:true,position:'bottom',labels:{color:C.text,font:{size:11.5},usePointStyle:true,boxWidth:8}}, tooltip:tip } } });
+
+// Surgery
+new Chart('surgeryTypeChart', { type:'bar', data:{ labels:['Emergency','Maxillofacial','Thoracic','Gynecologic','Reconstructive','Hepatobiliary','Transplant','Orthopedic','ENT','Chest Wall'], datasets:[{ data:[39,35,33,32,32,32,31,31,30,29], backgroundColor:C.teal+'dd', borderRadius:5, borderSkipped:false }] }, options:{ indexAxis:'y', plugins:{legend:{display:false},tooltip:tip}, scales:{ y:{grid:{color:C.border},ticks:{color:C.muted}}, x:{grid:{color:C.border},ticks:{color:C.muted},beginAtZero:true} } } });
+new Chart('surgeryOutcomeDonut', { type:'doughnut', data:{ datasets:[{ data:[223,213,202,188,174], backgroundColor:[C.rose,C.amber,C.slate,C.sage,C.teal], borderWidth:0, hoverOffset:6 }] }, options:{ cutout:'68%', plugins:{legend:{display:false},tooltip:tip} } });
+
+// Staff
+new Chart('staffCompositionChart', { type:'doughnut', data:{ labels:['Doctors','Nurses','Helpers'], datasets:[{ data:[400,500,1100], backgroundColor:[C.teal,C.slate,C.sage], borderWidth:0, hoverOffset:6 }] }, options:{ cutout:'65%', plugins:{ legend:{display:true,position:'bottom',labels:{color:C.text,usePointStyle:true,boxWidth:8,font:{size:12}}}, tooltip:tip } } });
+new Chart('doctorGenderDonut', { type:'doughnut', data:{ datasets:[{ data:[261,139], backgroundColor:[C.slate,C.teal], borderWidth:0, hoverOffset:6 }] }, options:{ cutout:'70%', plugins:{legend:{display:false},tooltip:tip} } });
+
+// Beds
+new Chart('roomTypeChart', { type:'bar', data:{ labels:['Consultation','Super Deluxe','Deluxe','Standard','Emergency','Operation'], datasets:[{ data:[148,60,60,60,33,30], backgroundColor:[C.teal,C.slate,C.sage,C.amber,C.rose,C.slateL], borderRadius:6, borderSkipped:false }] }, options:{ plugins:{legend:{display:false},tooltip:tip}, scales:sc } });
+new Chart('bedPaymentChart', { type:'doughnut', data:{ labels:['Cash','Digital Wallet','Card','Insurance'], datasets:[{ data:[590,165,156,89], backgroundColor:[C.teal,C.slate,C.sage,C.amber], borderWidth:0, hoverOffset:6 }] }, options:{ cutout:'65%', plugins:{ legend:{display:true,position:'bottom',labels:{color:C.text,usePointStyle:true,boxWidth:8,font:{size:12}}}, tooltip:tip } } });
+
+// Revenue
+new Chart('revenueDonut', { type:'doughnut', data:{ labels:['Room Revenue','Bed Revenue','Appointment Revenue'], datasets:[{ data:[72063923,36061054,1663354], backgroundColor:[C.teal,C.slate,C.sage], borderWidth:0, hoverOffset:6 }] }, options:{ cutout:'65%', plugins:{ legend:{display:true,position:'bottom',labels:{color:C.text,usePointStyle:true,boxWidth:8,font:{size:12}}}, tooltip:{ ...tip, callbacks:{ label:(ctx)=>' ₨'+(ctx.raw/1e6).toFixed(1)+'M' } } } } });
+new Chart('paymentCompare', { type:'bar', data:{ labels:['Cash','Digital Wallet','Card','Insurance'], datasets:[ { label:'Room Admissions', data:[247,262,246,245], backgroundColor:C.teal, borderRadius:5, borderSkipped:false }, { label:'Bed Admissions', data:[590,165,156,89], backgroundColor:C.slate, borderRadius:5, borderSkipped:false } ] }, options:{ plugins:{ legend:{display:true,position:'top',labels:{color:C.text,usePointStyle:true,boxWidth:8,font:{size:12}}}, tooltip:tip }, scales:sc } });
+</script>
+</body>
+</html>
