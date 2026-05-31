@@ -137,7 +137,7 @@ Color palette chosen to reflect a **neutral, professional HMS aesthetic**:
 ## 🚀 How to Run
 
 1. Open the URL:
-(https://kashananalytics.github.io/Hospital_Management_System_Dashboard/)
+https://kashananalytics.github.io/Hospital_Management_System_Dashboard/
 2. Open `HMS_Dashboard.html` in any modern browser.
 3. No server, no installation, no dependencies — works offline.
 
