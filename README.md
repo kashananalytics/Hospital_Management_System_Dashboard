@@ -134,4 +134,23 @@ Color palette chosen to reflect a **neutral, professional HMS aesthetic**:
 
 ---
 
-## 📁 File Structure
+## 🚀 How to Run
+
+1. Clone the repository:
+```bash
+   git clone https://github.com/YOUR_USERNAME/Hospital-Management-System-Dashboard.git
+```
+2. Open `HMS_Dashboard.html` in any modern browser.
+3. No server, no installation, no dependencies — works offline.
+
+---
+
+## 🤖 AI Disclosure
+
+This project was developed **with the assistance of Claude by Anthropic**. AI was used to help with data extraction, chart logic, layout structure, and code generation. All data, project decisions, and ownership belong to me. I believe transparency about AI tooling is a professional standard worth keeping.
+
+---
+
+## 📜 License
+
+MIT License — free to use, modify, and distribute with attribution.
