@@ -136,9 +136,9 @@ Color palette chosen to reflect a **neutral, professional HMS aesthetic**:
 
 ## 🚀 How to Run
 
-1. Clone the repository:
+1. Open the URL:
 ```bash
-   git clone https://github.com/YOUR_USERNAME/Hospital-Management-System-Dashboard.git
+   (https://kashananalytics.github.io/Hospital_Management_System_Dashboard/)
 ```
 2. Open `HMS_Dashboard.html` in any modern browser.
 3. No server, no installation, no dependencies — works offline.
